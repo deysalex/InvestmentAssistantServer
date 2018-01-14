@@ -9,9 +9,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import ru.deysa.investment.assistant.server.Config;
 import ru.deysa.investment.assistant.server.external.IAssistant;
-import ru.deysa.investment.assistant.server.external.IInvestmentAssistantStore;
-import ru.deysa.investment.assistant.server.manager.TelegramManager;
+import ru.deysa.investment.assistant.store.client.StoreClient;
+import ru.deysa.investment.assistant.store.client.api.v1.share.ShareResponse;
+import ru.deysa.telegram.bot.client.TelegramBotClient;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class TelegramScheduler {
@@ -19,29 +24,40 @@ public class TelegramScheduler {
     private final Logger log = LoggerFactory.getLogger(TelegramScheduler.class);
 
     @Autowired
-    private TelegramManager telegramManager;
-
-    @Autowired
     private IAssistant assistant;
 
     @Autowired
-    private IInvestmentAssistantStore investmentAssistantStore;
+    private Config config;
 
     @Scheduled(cron = "${cron.setting}")
-    public void checkQuote()
-    {
-        for (String name : investmentAssistantStore.getShares()) {
+    public void checkQuote() {
+        StoreClient storeClient = new StoreClient(config.getInvestmentAssistantStoreApiUrl());
+        List<ShareResponse> list =
+                storeClient.getShares().stream().filter(ShareResponse::getEnable).collect(Collectors.toList());
+        for (ShareResponse shareResponse : list) {
             try {
-                Double quote = assistant.getValue(name);
-                if (quote > investmentAssistantStore.getMaxValue(name)) {
-                    telegramManager.sendMessage(" up " + quote);
-                } else if (quote < investmentAssistantStore.getMinValue(name)) {
-                    telegramManager.sendMessage(" down " + quote);
+                String message = getMessage(shareResponse);
+                if (!message.isEmpty()) {
+                    TelegramBotClient telegramBotClient =
+                            new TelegramBotClient(config.getTelegramBotChatId(), config.getTelegramBotToken());
+                    telegramBotClient.sendMessage(message);
+                    storeClient.disable(shareResponse);
                 }
             } catch (Exception e) {
                 log.error("Scheduler error", e);
             }
         }
+    }
+
+    private String getMessage(ShareResponse shareResponse) throws Exception {
+        String result = "";
+        Double quote = assistant.getValue(shareResponse.getName());
+        if (quote < shareResponse.getMin()) {
+            result = " up " + quote;
+        } else if (quote > shareResponse.getMax()) {
+            result = " down " + quote;
+        }
+        return result;
     }
 
 }

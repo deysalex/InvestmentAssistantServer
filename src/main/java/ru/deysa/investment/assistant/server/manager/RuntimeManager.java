@@ -20,8 +20,7 @@ public class RuntimeManager {
 
     private String slimerScriptFolder;
 
-    public void run(String command) throws IOException, InterruptedException
-    {
+    public void run(String command) throws IOException, InterruptedException {
         Runtime runtime = Runtime.getRuntime();
         Process process = runtime.exec(command);
         log.info("Command:" + command);

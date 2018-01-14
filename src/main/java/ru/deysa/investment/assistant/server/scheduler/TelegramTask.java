@@ -8,7 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.deysa.investment.assistant.server.manager.TelegramManager;
+import ru.deysa.investment.assistant.server.Config;
+import ru.deysa.telegram.bot.client.TelegramBotClient;
 
 import java.util.Calendar;
 
@@ -18,7 +19,7 @@ public class TelegramTask extends Thread {
     private final Logger log = LoggerFactory.getLogger(TelegramTask.class);
 
     @Autowired
-    private TelegramManager telegramManager;
+    private Config config;
 
     private String message = "";
 
@@ -27,12 +28,13 @@ public class TelegramTask extends Thread {
     private int minute = 0;
 
     @Override
-    public void run()
-    {
+    public void run() {
         try {
             while (true) {
                 sleep(getTimeout(hour, minute));
-                telegramManager.sendMessage(message);
+                TelegramBotClient telegramBotClient =
+                        new TelegramBotClient(config.getTelegramBotChatId(), config.getTelegramBotToken());
+                telegramBotClient.sendMessage(message);
             }
         } catch (InterruptedException e) {
             log.error("Error in TelegramScheduler", e);
@@ -54,8 +56,7 @@ public class TelegramTask extends Thread {
         return this;
     }
 
-    private static long getTimeout(int hour, int minute)
-    {
+    private static long getTimeout(int hour, int minute) {
         Calendar futureTime = Calendar.getInstance();
         futureTime.set(Calendar.HOUR_OF_DAY, hour);
         futureTime.set(Calendar.MINUTE, minute);

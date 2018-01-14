@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        mavenLocal()
         mavenCentral()
     }
     dependencies {
@@ -18,6 +19,9 @@ buildscript {
         classpath("jstl:jstl:1.2")
         classpath("org.jsoup:jsoup:1.8.3")
         classpath("org.jsoup:jsoup:1.10.2")
+
+        classpath("ru.deysa.investment.assistant:store-client:1.0-SNAPSHOT")
+        classpath("ru.deysa.telegram:bot-client:1.0-SNAPSHOT")
     }
 }
 
@@ -27,10 +31,11 @@ apply plugin: 'war'
 
 jar {
     baseName = 'ru.deysa.investment.assistant.server'
-    version =  '0.1.0'
+    version = '0.1.0'
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -53,6 +58,8 @@ dependencies {
     compile("com.googlecode.json-simple:json-simple:1.1")
     compile("org.jsoup:jsoup:1.8.3")
     compile("org.jsoup:jsoup:1.10.2")
+    compile("ru.deysa.investment.assistant:store-client:1.0-SNAPSHOT")
+    compile("ru.deysa.telegram:bot-client:1.0-SNAPSHOT")
 }
 
 task wrapper(type: Wrapper) {
