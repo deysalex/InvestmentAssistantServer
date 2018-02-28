@@ -51,11 +51,12 @@ public class TelegramScheduler {
 
     private String getMessage(ShareResponse shareResponse) throws Exception {
         String result = "";
-        Double quote = assistant.getValue(shareResponse.getName());
+        String name = shareResponse.getName();
+        Double quote = assistant.getValue(name);
         if (quote < shareResponse.getMin()) {
-            result = " up " + quote;
+            result = name + " down " + quote;
         } else if (quote > shareResponse.getMax()) {
-            result = " down " + quote;
+            result = name + " up " + quote;
         }
         return result;
     }
